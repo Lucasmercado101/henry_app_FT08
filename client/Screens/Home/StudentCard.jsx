@@ -8,35 +8,26 @@ import {
   List,
   ListItem,
 } from "native-base";
-import {
-  getUserCohortId,
-  getUserCohort,
-} from "../../Redux/Actions/userActions";
-import { Pressable, StyleSheet, View, Modal } from "react-native";
+import { getUserCohort } from "../../Redux/Actions/userActions";
+import { Pressable, StyleSheet, View, Modal, FlatList } from "react-native";
 import { ScrollView } from "react-native-gesture-handler";
 import { useDispatch, useSelector } from "react-redux";
-import store from "../../Redux/store";
 
-export default function StudentCard({ data }) {
+export default function StudentCard() {
   const dispatch = useDispatch();
   const [modalVisible, setModalVisible] = useState(false);
-  if (!data && Object.keys(data).length === 0) return null;
 
-  let student = useSelector((store) => store.userInfo.usuario);
+  const userData = useSelector((state) => state.userInfo.usuario);
+
+  let { usuario } = useSelector((store) => store.userInfo);
+  let { cohort: cohortData } = useSelector((store) => store.userInfo);
 
   useEffect(() => {
-    dispatch(getUserCohortId(student.cohort));
+    if (usuario.cohort) dispatch(getUserCohort(usuario.cohort.id));
   }, []);
-  let cohortid = useSelector((store) => store.userInfo.cohortId);
-  useEffect(() => {
-    dispatch(getUserCohort(cohortid[0].id));
-  }, []);
+  if (Object.keys(userData).length === 0) return null;
 
-  let cohortData = useSelector((store) => store.userInfo.cohort);
   let students = cohortData.students;
-  if (students === undefined) return null;
-
-  if (!cohortData && Object.keys(cohortData).length === undefined) return null;
 
   const {
     cellphone,
@@ -50,8 +41,7 @@ export default function StudentCard({ data }) {
     module,
     name,
     projectManagers,
-    startDay,
-  } = data;
+  } = userData;
 
   return (
     <ScrollView>
@@ -74,13 +64,19 @@ export default function StudentCard({ data }) {
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               <Text style={styles.modalText}>Usuarios del cohorte </Text>
-              {students.map((student) => {
-                return (
-                  <Text>
-                    {student.name} {student.lastName}
-                  </Text>
-                );
-              })}
+              <Container>
+                <ScrollView>
+                  {!students ? <Text>loading...</Text> : null}
+                  {students &&
+                    students.map((student) => {
+                      return (
+                        <Text>
+                          {student.name} {student.lastName}
+                        </Text>
+                      );
+                    })}
+                </ScrollView>
+              </Container>
               <Pressable
                 style={[styles.button, styles.buttonClose]}
                 onPress={() => setModalVisible(!modalVisible)}
@@ -105,8 +101,9 @@ export default function StudentCard({ data }) {
         <Text style={styles.titles}>{github}</Text>
         <View style={{ flex: 1, flexDirection: "column" }}>
           <Text style={styles.items}>Instructor</Text>
+
           <Text style={styles.titles}>
-            {instructor && Object.keys(instructor).length > 0
+            {instructor
               ? `${instructor.firstName} ${instructor.lastName}`
               : "ninguno"}
           </Text>
@@ -114,28 +111,22 @@ export default function StudentCard({ data }) {
         <View style={{ flex: 1, flexDirection: "column" }}>
           <Text style={styles.items}>Modulo</Text>
           <Text style={styles.titles}>
-            {module ? module : "no tiene asignado ningun modulo"}
+            {module ? module.name : "no tiene asignado ningun modulo"}
           </Text>
         </View>
         <View style={{ flex: 1, flexDirection: "column" }}>
           <Text style={styles.items}>Grupo</Text>
           <Text style={styles.titles}>
-            {group ? group : "no tiene asignado ningun grupo"}
+            {group ? group.name : "no tiene asignado ningun grupo"}
           </Text>
         </View>
         <View style={{ flex: 1, flexDirection: "column" }}>
           <Pressable onPress={() => setModalVisible(true)}>
             <Text style={styles.cohort}>Cohort:</Text>
             <Text style={styles.titles}>
-              {cohort ? cohort : "no tiene asignado ningun cohorte"}
+              {cohort ? cohort.name : "no tiene asignado ningun cohorte"}
             </Text>
           </Pressable>
-        </View>
-        <View style={{ flex: 1, flexDirection: "column" }}>
-          <Text style={styles.items}>Fecha de Inicio</Text>
-          <Text style={styles.titles}>
-            {startDay ? startDay.slice(0, 10) : "indefinido"}
-          </Text>
         </View>
         <View style={{ flex: 1, flexDirection: "column" }}>
           <Text style={styles.items}>Numero de Telefono</Text>
